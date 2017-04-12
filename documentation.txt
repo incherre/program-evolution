@@ -1,0 +1,119 @@
+Registers:
+	There are 16 registers, numbered 0-15. The first three are read only. Register number 0 is always set to
+	the value zero. Register number 1 is the program counter. Register number 2 stores the value of the last
+	comperison command.
+
+Commands:
+	The first 4 bits of every command is the op code. If the first 4 bits are not a valid op code, the
+	instruction is skipped.
+
+----- Example entry -----
+opcode - name:
+	[bits]: function
+	
+	description
+----- End -----
+
+0000 - loadb:
+	[0-3]: op code
+	[4-11]: value
+	[12-15]: destination register
+
+	This will load the given value into the lowest 8 bits of the destination register. If the previous value
+	exceeded the range of an unsigned 16 bit integer, it will be truncated.
+
+0010 - loadt:
+	[0-3]: op code
+	[4-11]: value
+	[12-15]: destination register
+
+	This will load the given value into the highest 8 bits of the destination register. If the previous value
+	exceeded the range of an unsigned 16 bit integer, it will be truncated.
+
+0001 - add:
+	[0-3]: op code
+	[4-7]: source register 1
+	[8-11]: source register 2
+	[12-15]: destination register
+
+	The value of the destination register will be set to the sum of the values of the source registers.
+
+0011 - sub:
+	[0-3]: op code
+	[4-7]: source register 1
+	[8-11]: source register 2
+	[12-15]: destination register
+
+	The value of the destination register will be set to the difference of the values of the source registers.
+
+1101 - jump:
+	[0-3]: op code
+	[4-11]: offset
+	[12-15]: value register
+
+	Program control is transferred to the position equal to the value in the register plus the offset, minus
+	128. The program counter will still be incremented by one afterwards.
+
+1111 - branch:
+	[0-3]: op code
+	[4-15]: offset
+
+	If the value of the cmp register is 1, program control is transferred to the current instruction plus the
+	offset, minus 2048.
+
+1110 - eq:
+	[0-3]: op code
+	[4-7]: source register 1
+	[8-11]: source register 2
+	[12-15]: unused
+
+	If the value of source register 1 is equal to the value of source register 2, cmp is set to 1. Otherwise,
+	it is set to 0.
+
+1000 - lt:
+	[0-3]: op code
+	[4-7]: source register 1
+	[8-11]: source register 2
+	[12-15]: unused
+
+	If the value of source register 1 is less than the value of source register 2, cmp is set to 1. Otherwise,
+	it is set to 0.
+
+1001 - gt:
+	[0-3]: op code
+	[4-7]: source register 1
+	[8-11]: source register 2
+	[12-15]: unused
+
+	If the value of source register 1 is greater than the value of source register 2, cmp is set to 1.
+	Otherwise, it is set to 0.
+
+1100 - no:
+	[0-3]: op code
+	[4-15]: unused
+
+	If the value of cmp is 0, it is set to 1. Otherwise, it is set to 0.
+
+0100 - prin:
+	[0-3]: op code
+	[4-7]: value register
+	[8-13]: offset
+	[14-15]: options
+
+	Takes the value in the given register and adds the offset. If the options field is 0, it will print the
+	result in base ten. If the options field is 1, it will print the character that the number represents. If
+	the options field is 2, the number is printed in 16 bit unsigned binary representation. If the options
+	field is 3, the number is printed in 16 bit signed binary representation.
+
+Example program:
+0000011000110011
+0000000000010101
+0001010001010100
+0100010000000001
+1000010000110000
+1111011111111100
+
+This program will print out all the printable characters.
+This is the output:
+123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	
+
