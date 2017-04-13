@@ -7,8 +7,8 @@ def fitness(prog):
     # This fitness function awards long output and punishes long programs
     # it is an attempt to evolve loops
     value = 0
-    value += len(prog.out) / 2
-    value -= len(prog.code) ** 1.125
+    value -= len(prog.out) / 2
+    value += len(prog.code) ** 1.125
     return value
 
 # Begin program
