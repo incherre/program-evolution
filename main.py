@@ -23,7 +23,7 @@ last = []
 print('Generating initial population.')
 
 if last == []:
-    progspace = populate(genSize, fitness)
+    progspace = Evolving.populate(genSize, fitness)
 else:
     progspace = [Evolving(last, fitness)]
     i = 0
