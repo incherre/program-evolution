@@ -103,7 +103,7 @@ class Program:
         jumplocation = self.regs[jreg] + offset
         if jumplocation < 0:
             jumplocation = 0
-        regs[PC] = jumplocation
+        self.regs[Program.PC] = jumplocation
 
     def loadt(self, inst):
         dest = Program.strtonum(inst[12:16], False)
