@@ -3,20 +3,22 @@ import string
 import random
 from evolveLib import Evolving
 
+# Program options
+genSize = 100
+keepRatio = 0.25
+cutoff = math.floor(genSize*keepRatio)
+timeLimit = 1
+outputLimit = 50
+
 def fitness(prog):
     # This fitness function awards long output and punishes long programs
     # it is an attempt to evolve loops
     value = 0
     value -= len(prog.out) / 2
     value += len(prog.code) ** 1.125
+    if prog.time > 0.99 * timeLimit: # kill programs that likely loop forever
+        value = math.inf
     return value
-
-# Begin program
-genSize = 100
-keepRatio = 0.25
-cutoff = math.floor(genSize*keepRatio)
-timeLimit = 1
-outputLimit = 50
 
 # Set last to [] if starting fresh
 last = []
