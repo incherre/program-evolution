@@ -16,6 +16,7 @@ genSize = 100
 keepRatio = 0.25
 cutoff = math.floor(genSize*keepRatio)
 timeLimit = 1
+outputLimit = 50
 
 # Set last to [] if starting fresh
 last = []
@@ -44,7 +45,7 @@ try:
         
         if not last == newprogs[0].score: # if the best score has changed, make note of it
             last = newprogs[0].score
-            print("gen " + str(t) + ': "' + newprogs[0].out + '", ' + str(newprogs[0].score))
+            print("gen " + str(t) + ': "' + newprogs[0].out[:outputLimit] + '", ' + str(newprogs[0].score))
         t += 1
 
         i = 0
@@ -63,7 +64,7 @@ best = sorted(progspace)[:5]
 
 for i in best:
     print(str(i.code))
-    print(i.out)
+    print(i.out[:outputLimit])
     print('-----------------------------')
 
 input('Press Enter to exit.')
