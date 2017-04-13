@@ -4,23 +4,11 @@ import random
 from evolveLib import Evolving
 
 def fitness(prog):
-    target = "aaaaaaaaaaaaaaaaaaaaaaaa"
+    # This fitness function awards long output and punishes long programs
+    # it is an attempt to evolve loops
     value = 0
-    bincount = 0
-    
-    for i in range(min(len(prog.out),len(target))):
-        if not prog.out[i] == target[i]:
-            value += 3
-
-        if prog.out[i] in string.digits:
-            bincount += 1
-    value += bincount**2
-            
-    value += abs(len(prog.out) - len(target))**2
-
-    if len(prog.code) > 4:
-        value += ((len(prog.code) - 4)/2)**2
-
+    value += len(prog.out) / 2
+    value -= len(prog.code) ** 1.125
     return value
 
 # Begin program
@@ -30,20 +18,7 @@ cutoff = math.floor(genSize*keepRatio)
 timeLimit = 1
 
 # Set last to [] if starting fresh
-last = ['0100101100101001',
-        '0100111000101001',
-        '0100011000101001',
-        '0100101100101001',
-        '0100100100101001',
-        '0100011100101001',
-        '0100101100101001',
-        '1110001010000110',
-        '0100110100101001',
-        '0100000100000101',
-        '0100100000101001',
-        '0100000000101001',
-        '0100101100101001',
-        '1111011010001100']
+last = []
 
 print('Generating initial population.')
 
