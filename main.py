@@ -14,7 +14,7 @@ def fitness(prog):
     # This fitness function awards long output and punishes long programs
     # it is an attempt to evolve loops
     value = 0
-    value -= len(prog.out) / 2
+    value -= len(''.join(i for i in prog.out if not i.isdigit())) * 2
     value += len(prog.code) ** 1.125
     if prog.time > 0.99 * timeLimit: # kill programs that likely loop forever
         value = math.inf
@@ -47,7 +47,10 @@ try:
         
         if not last == newprogs[0].score: # if the best score has changed, make note of it
             last = newprogs[0].score
-            print("gen " + str(t) + ': "' + newprogs[0].out[:outputLimit] + '", ' + str(newprogs[0].score))
+            print("gen " + str(t) + ': "' + newprogs[0].out[:outputLimit], end = '')
+            if len(newprogs[0].out) > outputLimit:
+                print('...', end = '')
+            print('", ' + str(newprogs[0].score))
         t += 1
 
         i = 0
@@ -66,7 +69,9 @@ best = sorted(progspace)[:5]
 
 for i in best:
     print(str(i.code))
-    print(i.out[:outputLimit])
-    print('-----------------------------')
+    print(i.out[:outputLimit], end = '')
+    if len(i.out) > outputLimit:
+        print('...', end = '')
+    print('\n-----------------------------')
 
 input('Press Enter to exit.')
