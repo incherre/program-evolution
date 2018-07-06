@@ -35,7 +35,7 @@ class Evolving(Program):
                 pass
             elif random.random() < chance1:
                 #change it a bit
-                l.append(Evolving.change(self.code[i]))
+                l.append(Evolving.change(self.code[i], self.bits))
             else:
                 #plain copy
                 l.append(self.code[i])
@@ -57,14 +57,17 @@ class Evolving(Program):
             s += random.choice(['0', '1'])
         return s
 
-    def change(s):
-        o = ''
-        for c in s:
+    def change(s, bits):
+        mask = 0
+        if random.random() < chance0:
+            mask = mask | 1
+
+        for i in range(bits):
+            mask = mask << 1
             if random.random() < chance0:
-                o += random.choice(['0', '1'])
-            else:
-                o += c
-        return o
+                mask = mask | 1
+
+        return  s ^ mask
 
     def populate(number, fitness):
         l = []

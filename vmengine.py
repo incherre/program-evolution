@@ -10,7 +10,12 @@ class Program:
     cmp = 2
     
     def __init__(self, code):
-        self.code = code
+        self.code = []
+        for instruction in code:
+            if type(instruction) != int:
+                self.code.append(int(instruction, base=2))
+            else:
+                self.code.append(instruction)
  
     def runProgram(self, timelimit):
         self.regs = Program.initializeRegisters()
@@ -24,31 +29,32 @@ class Program:
         self.time = time.time() - startTime
 
     def runInstruction(self, inst):
-        ops = {
-            '0000': self.loadb,
-            '0001': self.add,
-            '0010': self.loadt,
-            '0011': self.sub,
-            '0100': self.prin,
-            '0101': self.none,
-            '0110': self.none,
-            '0111': self.none,
-            '1000': self.lt,
-            '1001': self.gt,
-            '1010': self.none,
-            '1011': self.none,
-            '1100': self.no,
-            '1101': self.jump,
-            '1110': self.eq,
-            '1111': self.branch
-        }
-        opcode = inst[:4]
+        ops = [
+            self.loadb,
+            self.add,
+            self.loadt,
+            self.sub,
+            self.prin,
+            self.none,
+            self.none,
+            self.none,
+            self.lt,
+            self.gt,
+            self.none,
+            self.none,
+            self.no,
+            self.jump,
+            self.eq,
+            self.branch
+        ]
+        mask = 15 << 12
+        opcode = (inst & mask) >> 12
         ops[opcode](inst)
 
     def prin(self, inst):
-        reg = Program.strtonum(inst[4:8], False)
-        offset = Program.strtonum(inst[8:14], False)
-        option = Program.strtonum(inst[14:16], False)
+        reg = Program.extract(inst, self.bits, 4, 8, False)
+        offset = Program.extract(inst, self.bits, 8, 14, False)
+        option = Program.extract(inst, self.bits, 14, 16, False)
         value = self.regs[reg] + offset
     
         if option == 1 and value >= 0 and value < len(string.printable):
@@ -67,74 +73,74 @@ class Program:
             self.regs[Program.cmp] = 1
 
     def gt(self, inst):
-        reg1 = Program.strtonum(inst[4:8], False)
-        reg2 = Program.strtonum(inst[8:12], False)
+        reg1 = Program.extract(inst, self.bits, 4, 8, False)
+        reg2 = Program.extract(inst, self.bits, 8, 12, False)
         if self.regs[reg1] > self.regs[reg2]:
             self.regs[Program.cmp] = 1
         else:
             self.regs[Program.cmp] = 0
 
     def lt(self, inst):
-        reg1 = Program.strtonum(inst[4:8], False)
-        reg2 = Program.strtonum(inst[8:12], False)
+        reg1 = Program.extract(inst, self.bits, 4, 8, False)
+        reg2 = Program.extract(inst, self.bits, 8, 12, False)
         if self.regs[reg1] < self.regs[reg2]:
             self.regs[Program.cmp] = 1
         else:
             self.regs[Program.cmp] = 0
 
     def eq(self, inst):
-        reg1 = Program.strtonum(inst[4:8], False)
-        reg2 = Program.strtonum(inst[8:12], False)
+        reg1 = Program.extract(inst, self.bits, 4, 8, False)
+        reg2 = Program.extract(inst, self.bits, 8, 12, False)
         if self.regs[reg1] == self.regs[reg2]:
             self.regs[Program.cmp] = 1
         else:
             self.regs[Program.cmp] = 0
 
     def branch(self, inst):
-        offset = Program.strtonum(inst[4:16], True)
+        offset = Program.extract(inst, self.bits, 4, 16, True)
         if self.regs[Program.cmp] == 1:
             self.regs[Program.PC] += offset
             if self.regs[Program.PC] < 0:
                 self.regs[Program.PC] = 0
 
     def jump(self, inst):
-        jreg = Program.strtonum(inst[12:16], False)
-        offset = Program.strtonum(inst[4:12], True)
+        jreg = Program.extract(inst, self.bits, 12, 16, False)
+        offset = Program.extract(inst, self.bits, 4, 12, True)
         jumplocation = self.regs[jreg] + offset
         if jumplocation < 0:
             jumplocation = 0
         self.regs[Program.PC] = jumplocation
 
     def loadt(self, inst):
-        dest = Program.strtonum(inst[12:16], False)
-        top = inst[4:12]
-        oldstring = Program.numtostr(self.regs[dest], Program.bits, False)
-        newstring = top + oldstring[8:]
+        dest = Program.extract(inst, self.bits, 12, 16, False)
+        top = Program.extract(inst, self.bits, 4, 12, False)
+        oldnum = self.regs[dest]
+        newnum = top << (self.bits // 2) | (oldnum & ((1 << (self.bits // 2)) - 1))
 
         if dest > Program.cmp: # some registers are read only
-            self.regs[dest] = Program.strtonum(newstring, False)
+            self.regs[dest] = newnum
 
     def loadb(self, inst):
-        dest = Program.strtonum(inst[12:16], False)
-        bottom = inst[4:12]
-        oldstring = Program.numtostr(self.regs[dest], Program.bits, False)
-        newstring = oldstring[:8] + bottom
+        dest = Program.extract(inst, self.bits, 12, 16, False)
+        bottom = Program.extract(inst, self.bits, 4, 12, False)
+        oldnum = self.regs[dest]
+        newnum = bottom | (oldnum & (((1 << (self.bits // 2)) - 1) << (self.bits // 2)))
 
         if dest > Program.cmp: # some registers are read only
-            self.regs[dest] = Program.strtonum(newstring, False)
+            self.regs[dest] = newnum
 
     def sub(self, inst):
-        reg1 = Program.strtonum(inst[4:8], False)
-        reg2 = Program.strtonum(inst[8:12], False)
-        dest = Program.strtonum(inst[12:16], False)
+        reg1 = Program.extract(inst, self.bits, 4, 8, False)
+        reg2 = Program.extract(inst, self.bits, 8, 12, False)
+        dest = Program.extract(inst, self.bits, 12, 16, False)
 
         if dest > Program.cmp: # some registers are read only
             self.regs[dest] = self.regs[reg1] - self.regs[reg2]
 
     def add(self, inst):
-        reg1 = Program.strtonum(inst[4:8], False)
-        reg2 = Program.strtonum(inst[8:12], False)
-        dest = Program.strtonum(inst[12:16], False)
+        reg1 = Program.extract(inst, self.bits, 4, 8, False)
+        reg2 = Program.extract(inst, self.bits, 8, 12, False)
+        dest = Program.extract(inst, self.bits, 12, 16, False)
 
         if dest > Program.cmp: # some registers are read only
             self.regs[dest] = self.regs[reg1] + self.regs[reg2]
@@ -145,34 +151,31 @@ class Program:
     def initializeRegisters():
         return [0] * Program.bits
 
-    def strtonum(string, signed):
-        #check if the string exists
-        if len(string) <= 0:
-            return 0
-        
-        #check if there is anything in string that is not a 0 or a 1
-        for c in string:
-            if not (c == '0' or c == '1'):
-                return 0
+    def extract(number, maxbits, firstbit, lastbit, signed):
+        #build the mask
+        mask = (1 << (lastbit - firstbit)) - 1
+        mask = mask << (maxbits - lastbit)
 
-        #convert
-        num = int(string, 2)
+        #apply the mask
+        num = (number & mask) >> (maxbits - lastbit)
 
         #deal with signedness
         if signed:
-            num -= 2**(len(string) - 1)
+            num -= (1 << ((lastbit - firstbit) - 1))
 
         return num
 
     def numtostr(num, length, signed):
         temp = num
         if signed:
-            temp += 2 ** (length - 1)
+            temp += 1 << (length - 1)
 
         if temp < 0:
             temp = 0
 
-        return bin(temp)[2:].zfill(length)[:length]
+        temp = temp & ((1 << length) - 1)
+
+        return bin(temp)[2:].zfill(length)
 
 
 if __name__ == "__main__":
